@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Meter Calibration Calculator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Simple icon components (since lucide-react isn't available via CDN easily)
+        const Droplets = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+        );
+
+        const Calculator = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+                <rect x="8" y="6" width="8" height="12" rx="1"></rect>
+                <path d="M8 18h8M8 14h8M8 10h8"></path>
+            </svg>
+        );
+
+        const Activity = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+        );
+
+        function FlowMeterCalibration() {
+            const [volumeAktual, setVolumeAktual] = useState('16500');
+            const [faktorKalibrasiLama, setFaktorKalibrasiLama] = useState('1400');
+            const [volumeTerbaca, setVolumeTerbaca] = useState('11165');
+            const [hasil, setHasil] = useState(null);
+
+            const hitung = () => {
+                const vAktual = parseFloat(volumeAktual);
+                const fKalibrasi = parseFloat(faktorKalibrasiLama);
+                const vTerbaca = parseFloat(volumeTerbaca);
+
+                if (!vAktual || !fKalibrasi || !vTerbaca) {
+                    alert('Mohon isi semua field dengan angka yang valid');
+                    return;
+                }
+
+                // Hitung jumlah pulse
+                const jumlahPulse = vTerbaca / (fKalibrasi / 1000);
+
+                // Hitung faktor kalibrasi baru
+                const faktorKalibrasiBaru = (vAktual / jumlahPulse) * 1000;
+
+                // Hitung error
+                const errorPersen = ((vTerbaca - vAktual) / vAktual) * 100;
+
+                setHasil({
+                    jumlahPulse: jumlahPulse.toFixed(2),
+                    faktorKalibrasiBaru: faktorKalibrasiBaru.toFixed(2),
+                    errorPersen: errorPersen.toFixed(2)
+                });
+            };
+
+            const reset = () => {
+                setVolumeAktual('');
+                setFaktorKalibrasiLama('');
+                setVolumeTerbaca('');
+                setHasil(null);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-blue-500 p-3 rounded-lg">
+                                    <Droplets className="text-white" size={32} />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-800">Kalkulator Kalibrasi Flow Meter</h1>
+                                    <p className="text-sm text-gray-600">Untuk Knapsack Sprayer</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Volume Aktual (mL)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={volumeAktual}
+                                        onChange={(e) => setVolumeAktual(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Contoh: 16500"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Volume cairan yang sebenarnya dikeluarkan</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Faktor Kalibrasi Lama (μL/pulse)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={faktorKalibrasiLama}
+                                        onChange={(e) => setFaktorKalibrasiLama(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Contoh: 1400"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Faktor kalibrasi yang saat ini digunakan</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Volume Terbaca Flow Meter (mL)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={volumeTerbaca}
+                                        onChange={(e) => setVolumeTerbaca(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Contoh: 11165"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Volume yang ditampilkan oleh flow meter</p>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={hitung}
+                                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                                    >
+                                        <Calculator size={20} />
+                                        Hitung Kalibrasi
+                                    </button>
+                                    <button
+                                        onClick={reset}
+                                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition duration-200"
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {hasil && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Activity className="text-green-500" size={24} />
+                                    <h2 className="text-xl font-bold text-gray-800">Hasil Perhitungan</h2>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Jumlah Pulse Terdeteksi</p>
+                                        <p className="text-2xl font-bold text-gray-800">{hasil.jumlahPulse} pulse</p>
+                                    </div>
+
+                                    <div className="bg-green-50 p-4 rounded-lg border-2 border-green-500">
+                                        <p className="text-sm text-gray-600 mb-1">✓ Faktor Kalibrasi Baru</p>
+                                        <p className="text-3xl font-bold text-green-600">{hasil.faktorKalibrasiBaru} μL/pulse</p>
+                                        <p className="text-xs text-gray-600 mt-2">Gunakan nilai ini untuk setting flow meter Anda</p>
+                                    </div>
+
+                                    <div className={`p-4 rounded-lg ${parseFloat(hasil.errorPersen) > 0 ? 'bg-red-50' : 'bg-blue-50'}`}>
+                                        <p className="text-sm text-gray-600 mb-1">Error Pengukuran</p>
+                                        <p className={`text-2xl font-bold ${parseFloat(hasil.errorPersen) > 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                                            {hasil.errorPersen}%
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            {parseFloat(hasil.errorPersen) > 0 ? 'Flow meter membaca lebih rendah' : 'Flow meter membaca lebih tinggi'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                                    <p className="text-sm font-semibold text-gray-700 mb-2">📌 Cara Penggunaan:</p>
+                                    <ol className="text-sm text-gray-600 space-y-1 ml-4 list-decimal">
+                                        <li>Masukkan faktor kalibrasi baru ({hasil.faktorKalibrasiBaru} μL/pulse) ke dalam setting flow meter</li>
+                                        <li>Lakukan pengujian ulang dengan volume yang diketahui</li>
+                                        <li>Jika masih ada selisih, ulangi proses kalibrasi</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FlowMeterCalibration />);
+    </script>
+</body>
+</html>
